@@ -5,20 +5,33 @@
     window.stormgram = f();
 })(function() {
 
+    function notify(message) {
+        chrome.notifications.create(null, {
+            type: 'basic',
+            iconUrl: '../icons/icon-48.png',
+            title: 'Stormgram notification',
+            message: message
+        }, function(notificationId) {});
+    }
+
     function loadNextProfile() {
-        if(stormgram.roundEnabled && instagramAccounts.length>0) {
-            chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
-            stormgram.counter++;
-            chrome.tabs.update(instagramTabId, {
-                //active: true,
-                url: "https://www.instagram.com/"+ instagramAccounts[0] 
-            }); 
+        if(instagramAccounts.length>0) {
+            if(stormgram.roundEnabled) {
+                chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
+                stormgram.counter++;
+                chrome.tabs.update(instagramTabId, {url: "https://www.instagram.com/" + instagramAccounts[0]}); 
+            } else {
+                stormgram.roundEnabled = false; // reset round state
+                chrome.tabs.remove(instagramTabId); // remove used Instagram tab
+                chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
+                notify("Round suspended!");
+            }
         } else {
-            alert('Round completato');
             stormgram.roundEnabled = false; // reset round state
-            stormgram.counter=0; // reset counter
+            stormgram.counter = 0;
             chrome.tabs.remove(instagramTabId); // remove used Instagram tab
             chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
+            notify("Round completed!");
         }
     }
 
@@ -26,10 +39,14 @@
         return JSON.parse(localStorage.getItem("ig_nicks"));
     }
 
+    function setAccountsStored(data) {
+        localStorage.setItem("ig_nicks", JSON.stringify(data));
+    }
+
     function updateNickList() {
         instagramAccounts.shift();
         chrome.browserAction.setBadgeText({text: (instagramAccounts.length).toString() });
-        localStorage.setItem("ig_nicks", JSON.stringify(instagramAccounts));
+        setAccountsStored(instagramAccounts);
     }
 
     function getFirstInstagramTab() {
@@ -59,18 +76,21 @@
     function listenChromeMsg(request, sender) {
         if(sender.id === request.id ) {
             switch(request.evt) {
-                case "alert":
-                    alert(request.msg);
+                case "notify":
+                    notify(request.msg);
                     break;
                 case "console":
                     console.log(request.msg);
                     break;
                 case "sendLikesBtn":
-                /* case "sendCommentsBtn": */
                     stormgram.roundEnabled = true; // set round state to true
-                    functionInvoked = request.evt;
                     instagramAccounts = request.data;
                     getFirstInstagramTab();
+                    break;
+                case "emptyListBtn":
+                    chrome.browserAction.setBadgeText({text: "0"});
+                    stormgram.roundEnabled = false;
+                    setAccountsStored([]); // reset instagram account array
                     break;
                 case "nextAccount":
                     loadNextProfile();
@@ -94,8 +114,7 @@
 
     let
         instagramAccounts = getAccountsStored() || [],
-        instagramTabId = -1,
-        functionInvoked = '';
+        instagramTabId = -1;
 
     chrome.browserAction.setBadgeText({text: (instagramAccounts ? instagramAccounts.length.toString() : 0 ) });
 
@@ -103,15 +122,15 @@
     chrome.extension.onMessage.addListener(listenChromeMsg);
     
     return {
-        counter: 1,
+        counter: 0,
         roundEnabled: false,
         getAccountsStored: getAccountsStored,
-        checkcurrentRound: function() {
-            let roundActive = false;
-            if(stormgram.roundEnabled) {
-                roundActive = confirm("Round in corso, vuoi interrompere?");
-            }
-            return roundActive;
+        checkRoundState: function() {
+            if( stormgram.roundEnabled && confirm("Round in corso, vuoi interrompere?") ) {
+                stormgram.roundEnabled = false;
+                return true;
+            } else
+                return false;
         }
     };
 
