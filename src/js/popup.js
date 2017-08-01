@@ -55,8 +55,10 @@
                     return (ig_account='@'+ig_account);
                 }).toString().replace(/,/g, '\n'); // \n EOL character
             }
-            document.getElementById('buttonContainer').addEventListener('click', delegateEvent, false);
+            
         }
+
+        document.getElementById('buttonContainer').addEventListener('click', delegateEvent, false);
         
     });
 
