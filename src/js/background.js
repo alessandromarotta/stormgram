@@ -7,7 +7,7 @@
 
     function loadNextProfile() {
         if(stormgram.roundEnabled && instagramAccounts.length>0) {
-            chrome.tabs.onUpdated.addListener(onTabUpdated); // triggered on create and update event
+            chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
             stormgram.counter++;
             chrome.tabs.update(instagramTabId, {
                 //active: true,
@@ -15,7 +15,10 @@
             }); 
         } else {
             alert('Round completato');
-            chrome.tabs.remove(instagramTabId);
+            stormgram.roundEnabled = false; // reset round state
+            stormgram.counter=0; // reset counter
+            chrome.tabs.remove(instagramTabId); // remove used Instagram tab
+            chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
         }
     }
 
