@@ -11,43 +11,37 @@
         if(!myNicks) {
             chrome.extension.sendMessage({
                 id: extensionId,
-                evt: "alert",
+                evt: "notify",
                 msg: "Devi incollare nel box di testo l'elenco dei nick preceduti da '@'"
             });
         } else {
-            const
-                eTarget = e.target,
-                instagramAccounts = myNicks.replace(/\s+/g, '').split('@'); // return array
+
+            const eTarget = e.target;
+
+            let message = {
+                id: extensionId,
+                evt: eTarget.id
+            };
             
             switch(eTarget.id) {
-                case "sendLikesBtn":
-                    eTarget.removeEventListener('click', delegateEvent, false);
-                    instagramAccounts.shift(); // remove the first empty item
-                    chrome.extension.sendMessage({
-                        id: extensionId,
-                        evt: eTarget.id,
-                        data: instagramAccounts // array
-                    });
-                    window.close();
+                case "emptyListBtn":
+                    document.getElementById('myNicksInput').value = "";
+                    chrome.extension.sendMessage(message);
                     break;
-                /* case "sendCommentsBtn":
-                    chrome.extension.sendMessage({
-                        id: extensionId,
-                        evt: "alert",
-                        msg: "Funzione non ancora implementata"
-                    });
-                    window.close();
-                    break; */
+                case "sendLikesBtn":
+                    let instagramAccounts = myNicks.replace(/\s+/g, '').split('@'); // return array
+                    instagramAccounts.shift(); // remove the first empty item
+                    message.data = instagramAccounts;
+                    chrome.extension.sendMessage(message);
+                    break;
                 default:
             }
         }
     }
 
     chrome.runtime.getBackgroundPage(function(bgWindow) {
-
-        if(bgWindow.stormgram.checkcurrentRound()) {
-            bgWindow.stormgram.roundEnabled = false;
-            bgWindow.stormgram.counter = 0;
+        if(bgWindow.stormgram.checkRoundState()) { // check if enabled and prompt to disable it
+            window.close();
         } else {
             let instagramAccounts = bgWindow.stormgram.getAccountsStored();
             if(instagramAccounts && instagramAccounts.length>0) { // check for stored Instagram accounts
@@ -55,11 +49,8 @@
                     return (ig_account='@'+ig_account);
                 }).toString().replace(/,/g, '\n'); // \n EOL character
             }
-            
+            document.getElementById('buttonContainer').onclick = delegateEvent;
         }
-
-        document.getElementById('buttonContainer').addEventListener('click', delegateEvent, false);
-        
     });
 
 })();
