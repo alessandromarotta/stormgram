@@ -27,12 +27,11 @@
     if(aElements[i] && aElements[i].href.indexOf("?taken-by="+currentAccount)>-1) {
         aElements[i].click();
         setTimeout(function() {
-            let likeBtn = document.querySelector('._tk4ba._1tv0k');
-            if(likeBtn.children[0].classList.contains('coreSpriteHeartOpen')) {
-                likeBtn.click();
-            }
+            let hearthEl = document.getElementsByClassName('coreSpriteHeartOpen')[0];
+            if(hearthEl)
+                hearthEl.parentNode.click();
             nextAccount();
-        }, randomWaitTime(1000) );
+        }, randomWaitTime(1500) );
     } else {
         nextAccount();
     }
