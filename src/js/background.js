@@ -24,7 +24,7 @@
                 stormgram.roundEnabled = false; // reset round state
                 chrome.tabs.remove(instagramTabId); // remove used Instagram tab
                 chrome.tabs.onUpdated.addListener(onTabUpdated); // re-enable listener on create and update event
-                notify("Round suspended!");
+                notify("Round paused!");
             }
         } else {
             stormgram.roundEnabled = false; // reset round state
@@ -126,7 +126,7 @@
         roundEnabled: false,
         getAccountsStored: getAccountsStored,
         checkRoundState: function() {
-            if( stormgram.roundEnabled && confirm("Round in corso, vuoi interrompere?") ) {
+            if( stormgram.roundEnabled && confirm("Task in progress, do you want to pause it?") ) {
                 stormgram.roundEnabled = false;
                 return true;
             } else
